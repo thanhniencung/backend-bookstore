@@ -26,7 +26,7 @@ func NewOrderRepo(sql *db.Sql) repository.OrderRepository {
 // chú ý trước khi tạo 1 record trong order table thì kiểm tra user hiện tại đã có
 // order hay chưa, nếu có rồi thì ko làm gì cả, chưa có thì mới tạo mới
 // 2. insert 1 record vào card table
-func (o *OrderRepoImpl) AddToCard(context context.Context, userId string, card model.Card) (int, error) {
+func (o *OrderRepoImpl) AddToCard(context context.Context, userId string, card model.Card) (model.Cart, error) {
 	sqlCheckOrder := `select * from orders where user_id = $1 and status = $2`
 	var orderRow = model.Order{}
 	err := o.sql.Db.GetContext(context, &orderRow, sqlCheckOrder, userId, model.ORDERING.String())
@@ -43,7 +43,7 @@ func (o *OrderRepoImpl) AddToCard(context context.Context, userId string, card m
 
 		_, err := o.sql.Db.NamedExecContext(context, sqlInsertOrderStatement, orderRow)
 		if err != nil {
-			return 0, err
+			return model.Cart{}, err
 		}
 	}
 
@@ -69,7 +69,7 @@ func (o *OrderRepoImpl) AddToCard(context context.Context, userId string, card m
 		_, err = o.sql.Db.NamedExecContext(context, sqlInsertCardStatement, card)
 		if err != nil {
 			fmt.Println("LOI 2: ", err.Error())
-			return 0, err
+			return model.Cart{}, err
 		}
 	}
 
@@ -84,21 +84,17 @@ func (o *OrderRepoImpl) AddToCard(context context.Context, userId string, card m
 	_, err = o.sql.Db.NamedExecContext(context, sqlUpdateCardStatement, card)
 	if err != nil {
 		fmt.Println("LOI 3: ", err.Error())
-		return 0, err
+		return model.Cart{}, err
 	}
 
 	var total int;
 	err = o.sql.Db.QueryRowxContext(context,
 		"SELECT COALESCE(SUM(quantity), 0) AS total FROM card WHERE order_id=$1", orderRow.OrderId).Scan(&total)
 	if err != nil {
-		fmt.Println("LOI 4: ", err.Error())
-		fmt.Println(err.Error())
-		return 0, err
+		return model.Cart{}, err
 	}
 
-	fmt.Println("TOTAL 1 = ", total)
-
-	return total, nil
+	return model.Cart{Total: total, OrderId: orderRow.OrderId}, nil
 }
 
 func (o *OrderRepoImpl) UpdateStateOrder(context context.Context, order model.Order) error {

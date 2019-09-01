@@ -11,9 +11,9 @@ func main() {
 	sql := &db.Sql{
 		Host:     "localhost",
 		Port:     5432,
-		UserName: "ryannguyen",
+		UserName: "demo_flutter",
 		Password: "123456",
-		DbName:   "bookstore",
+		DbName:   "code4func",
 	}
 
 	sql.Connect()

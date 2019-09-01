@@ -36,12 +36,12 @@ func (o *OrderHandler) AddToCard(c echo.Context) error {
 
 	ctx, _ := context.WithTimeout(c.Request().Context(), 10*time.Second)
 
-	total, err := o.OrderRepo.AddToCard(ctx, claims.UserId, req)
+	cart, err := o.OrderRepo.AddToCard(ctx, claims.UserId, req)
 	if err != nil {
 		return helper.ResponseErr(c, http.StatusInternalServerError, err.Error())
 	}
 
-	return helper.ResponseData(c, echo.Map{"total": total})
+	return helper.ResponseData(c, echo.Map{"total": cart.Total, "orderId": cart.OrderId})
 }
 
 // Click vào shopping card icon ở AppBar sẽ call api này
